@@ -58,7 +58,7 @@ You record a gaming clip or audio track on your computer. You drag it into Disco
 Until ShrinkCord is available on the Chrome Web Store, you can install it in **Google Chrome**, **Brave**, **Microsoft Edge**, or any Chromium-based browser:
 
 1. **Download the Extension:**
-   * Download the latest **[`shrinkcord-v1.2.0.zip`](https://github.com/Isaac4096/shrink-cord/releases/latest)** from the [Releases page](https://github.com/Isaac4096/shrink-cord/releases).
+   * Download the latest **[`shrinkcord-v1.3.0.zip`](https://github.com/Isaac4096/shrink-cord/releases/latest)** from the [Releases page](https://github.com/Isaac4096/shrink-cord/releases).
 2. **Extract the ZIP:**
    * Right-click the downloaded `.zip` file and select **Extract All...** to an accessible folder (e.g., `Documents/ShrinkCord`).
 3. **Load into Browser:**
