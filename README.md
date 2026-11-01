@@ -4,6 +4,7 @@
 > *100% Client-Side • Universal MP4 & WebM • Batch Processing • Open Source (GPLv3) • Zero Telemetry*
 
 [![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=flat-square)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![Microsoft Edge](https://img.shields.io/badge/Microsoft%20Edge-Available%20on%20Store-0078D7?style=flat-square&logo=microsoft-edge&logoColor=white)](https://microsoftedge.microsoft.com/addons/detail/mebmpbpffobammiobcffhkneglofcjmep)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg?style=flat-square)](LICENSE)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local-success?style=flat-square)](#privacy--security)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-yellow.svg?style=flat-square&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/isaac4096)
@@ -53,9 +54,23 @@ You record a gaming clip or audio track on your computer. You drag it into Disco
 
 ---
 
-## 🛠️ Quick Installation (30 Seconds)
+## 🛠️ Installation
 
-Until ShrinkCord is available on the Chrome Web Store, you can install it in **Google Chrome**, **Brave**, **Microsoft Edge**, or any Chromium-based browser:
+### 🚀 Option 1: Official Microsoft Edge Add-ons Store (Recommended — 1-Click)
+Install ShrinkCord directly from the official verified store with automatic updates:
+
+<p align="center">
+  <a href="https://microsoftedge.microsoft.com/addons/detail/mebmpbpffobammiobcffhkneglofcjmep" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Get%20it%20from-Microsoft%20Edge%20Store-0078D7?style=for-the-badge&logo=microsoft-edge&logoColor=white" alt="Get ShrinkCord on Microsoft Edge Add-ons" height="46" />
+  </a>
+</p>
+
+> **Tip:** You can also install Edge extensions directly into **Google Chrome** or **Brave** by clicking *"Allow extensions from other stores"* when visiting the link above.
+
+<br/>
+
+### 📦 Option 2: Manual ZIP Install (Developer Mode)
+If you prefer loading directly from GitHub releases:
 
 1. **Download the Extension:**
    * Download the latest **[`shrinkcord-v1.3.0.zip`](https://github.com/Isaac4096/shrink-cord/releases/latest)** from the [Releases page](https://github.com/Isaac4096/shrink-cord/releases).
