@@ -8,7 +8,7 @@
 
   const { Compressor, UI } = window.ShrinkCord;
   const INTERCEPT_EVENTS = ["drop", "paste", "change"];
-  const DISCORD_FREE_LIMIT_BYTES = 20 * 1024 * 1024;
+  const DEFAULT_LIMIT_MB = 20;
   const generatedFiles = new WeakSet();
 
   let cachedSettings = {};
@@ -21,7 +21,7 @@
   let suppressNitroUntil = 0;
 
   function getUploadLimitBytes() {
-    const mb = (cachedSettings && cachedSettings.targetMB > 20) ? cachedSettings.targetMB : 20;
+    const mb = (cachedSettings && cachedSettings.targetMB > DEFAULT_LIMIT_MB) ? cachedSettings.targetMB : DEFAULT_LIMIT_MB;
     return mb * 1024 * 1024;
   }
 
@@ -31,9 +31,11 @@
 
   window.dispatchEvent(new CustomEvent("dshrink:teardown"));
 
+  const extApi = typeof chrome !== "undefined" && chrome?.runtime ? chrome : (typeof browser !== "undefined" ? browser : null);
+
   function isExtensionValid() {
     try {
-      return Boolean(typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id);
+      return Boolean(extApi && extApi.runtime && extApi.runtime.id);
     } catch (e) {
       return false;
     }
@@ -50,15 +52,15 @@
       done(cachedSettings);
     };
 
-    if (!isExtensionValid() || !chrome?.storage?.local) {
+    if (!isExtensionValid() || !extApi?.storage?.local) {
       finish(cachedSettings);
       return;
     }
 
     try {
-      chrome.storage.local.get(["targetMB", "quality", "format"], (saved) => {
+      extApi.storage.local.get(["targetMB", "quality", "format", "fps"], (saved) => {
         try {
-          if (chrome.runtime && chrome.runtime.lastError) {
+          if (extApi.runtime && extApi.runtime.lastError) {
             finish(cachedSettings);
             return;
           }
@@ -83,30 +85,32 @@
     } catch (e) {}
   }
 
-  function attachToDiscord(blob, originalName, isAudio, format, customName, isSpoiler) {
+  function attachToDiscord(output, originalName, isAudio, format, customName, isSpoiler) {
     const isMp4 = !isAudio && format === "mp4";
     const ext = isAudio ? "wav" : (isMp4 ? "mp4" : "webm");
     const mimeType = isAudio ? "audio/wav" : (isMp4 ? "video/mp4" : "video/webm");
-
-    let name = (customName && customName.trim())
-      ? customName.trim()
-      : `${(originalName || (isAudio ? "audio" : "video")).replace(/\.[^/.]+$/, "")}-compressed.${ext}`;
-
-    const expectedExt = `.${ext}`;
-    if (!name.toLowerCase().endsWith(expectedExt)) {
-      name = `${name.replace(/\.[^/.]+$/, "")}${expectedExt}`;
-    }
-    if (isSpoiler && !name.startsWith("SPOILER_")) {
-      name = `SPOILER_${name}`;
-    } else if (!isSpoiler && name.startsWith("SPOILER_")) {
-      name = name.replace(/^SPOILER_/, "");
-    }
-
-    const compressedFile = new File([blob], name, { type: mimeType });
-    generatedFiles.add(compressedFile);
+    const items = Array.isArray(output) ? output : [output];
 
     const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(compressedFile);
+
+    items.forEach((item, idx) => {
+      const blob = item.blob || item;
+      const partSuffix = items.length > 1 ? `-part${idx + 1}` : "-compressed";
+      let base = (customName && customName.trim())
+        ? customName.trim().replace(/\.[^/.]+$/, "")
+        : (originalName || (isAudio ? "audio" : "video")).replace(/\.[^/.]+$/, "");
+
+      let name = `${base}${partSuffix}.${ext}`;
+      if (isSpoiler && !name.startsWith("SPOILER_")) {
+        name = `SPOILER_${name}`;
+      } else if (!isSpoiler && name.startsWith("SPOILER_")) {
+        name = name.replace(/^SPOILER_/, "");
+      }
+
+      const file = new File([blob], name, { type: mimeType });
+      generatedFiles.add(file);
+      dataTransfer.items.add(file);
+    });
 
     const fileInput =
       document.querySelector('input.file-input[type="file"], form input[type="file"], input[type="file"][multiple]') ||
@@ -116,11 +120,22 @@
     if (fileInput) {
       fileInput.files = dataTransfer.files;
       fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+      fileInput.dispatchEvent(new Event("input", { bubbles: true }));
       return;
     }
 
-    const chatBox = document.querySelector('[role="textbox"]') || document.querySelector('[contenteditable="true"]') || document.body;
+    const chatBox =
+      document.querySelector('[role="textbox"]') ||
+      document.querySelector('[data-slate-editor="true"]') ||
+      document.querySelector('[contenteditable="true"]') ||
+      document.querySelector('[class*="channelTextArea"]') ||
+      document.body;
+
     if (!chatBox) return;
+
+    try {
+      if (typeof chatBox.focus === "function") chatBox.focus();
+    } catch (e) {}
 
     try {
       const pasteEvent = new ClipboardEvent("paste", {
@@ -218,23 +233,33 @@
             }
           };
 
-          const maxDuration = (options.clip && options.clip !== "full") ? parseFloat(options.clip) : 0;
+          const clipConfig = {
+            mode: options.mode || "compress",
+            startTime: options.startTime || 0,
+            endTime: options.endTime || 0,
+            maxDuration: (options.clip && options.clip !== "full" && options.clip !== "custom") ? parseFloat(options.clip) : 0,
+            fps: options.fps || 30
+          };
 
           activeCleanup = isAudio
-            ? Compressor.compressAudio(file, options.targetMB, options.quality, maxDuration, callbacks, {
-                audioBoost: options.audioBoost
+            ? Compressor.compressAudio(file, options.targetMB, options.quality, clipConfig.maxDuration, callbacks, {
+                mode: options.mode || "compress",
+                audioBoost: options.audioBoost,
+                startTime: options.startTime,
+                endTime: options.endTime
               })
             : Compressor.compressVideo(
                 file,
                 options.targetMB,
                 options.quality,
-                maxDuration,
+                clipConfig,
                 callbacks,
                 options.hostElement,
                 options.format,
                 {
                   muteAudio: options.muteAudio,
-                  audioBoost: options.audioBoost
+                  audioBoost: options.audioBoost,
+                  fps: options.fps || 30
                 }
               );
         },

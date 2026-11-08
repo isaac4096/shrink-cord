@@ -8,9 +8,8 @@
 
   const LOGO_URL = (function () {
     try {
-      return (typeof chrome !== "undefined" && chrome?.runtime?.getURL)
-        ? chrome.runtime.getURL("icons/logo.png")
-        : "";
+      const extApi = typeof chrome !== "undefined" && chrome?.runtime ? chrome : (typeof browser !== "undefined" ? browser : null);
+      return extApi?.runtime?.getURL ? extApi.runtime.getURL("icons/logo.png") : "";
     } catch (e) {
       return "";
     }
@@ -24,7 +23,12 @@
     file: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm0 1.5L18.5 8H14zM6 20V4h6v6h6v10z"/></svg>`,
     warn: `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10h2v4h-2zm0 6h2v2h-2z"/></svg>`,
     audio: `<svg class="dshrink-file-icon" viewBox="0 0 24 24" fill="none" stroke="#5865f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
-    video: `<svg class="dshrink-file-icon" viewBox="0 0 24 24" fill="none" stroke="#5865f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>`
+    video: `<svg class="dshrink-file-icon" viewBox="0 0 24 24" fill="none" stroke="#5865f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>`,
+    play: `<svg viewBox="0 0 24 24" width="18" height="18"><polygon points="7 4 20 12 7 20 7 4" fill="currentColor"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" width="18" height="18"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>`,
+    volume: `<svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`,
+    mute: `<svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`,
+    scissors: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`
   };
 
   const MODAL_CSS = `
@@ -69,12 +73,372 @@
       max-width: 92vw;
       border-radius: 16px;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      max-height: 92vh;
       display: flex;
       flex-direction: column;
       animation: dshrink-scale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 10;
       padding: 22px 22px 18px 22px;
+    }
+
+    #dshrink-modal-root .dshrink-editor-card {
+      background: #111214;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    #dshrink-modal-root .dshrink-player-wrap {
+      position: relative;
+      width: 100%;
+      background: #000000;
+    }
+
+    #dshrink-modal-root .dshrink-video-screen {
+      position: relative;
+      width: 100%;
+      height: 185px;
+      background: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    #dshrink-modal-root .dshrink-video-element {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+    }
+
+    #dshrink-modal-root .dshrink-audio-screen {
+      position: relative;
+      width: 100%;
+      height: 75px;
+      background: radial-gradient(circle at center, #1e2029 0%, #111214 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    #dshrink-modal-root .dshrink-audio-waves {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 36px;
+      opacity: 0.85;
+    }
+
+    #dshrink-modal-root .dshrink-audio-bar {
+      width: 3px;
+      background: #5865f2;
+      border-radius: 2px;
+      transition: height 0.15s ease;
+    }
+
+    #dshrink-modal-root .dshrink-player-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.28);
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+      opacity: 1;
+    }
+
+    #dshrink-modal-root .dshrink-player-overlay.playing {
+      opacity: 0;
+    }
+
+    #dshrink-modal-root .dshrink-video-screen:hover .dshrink-player-overlay,
+    #dshrink-modal-root .dshrink-audio-screen:hover .dshrink-player-overlay {
+      opacity: 1;
+    }
+
+    #dshrink-modal-root .dshrink-play-bubble {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(30, 31, 34, 0.9);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    #dshrink-modal-root .dshrink-video-screen:hover .dshrink-play-bubble,
+    #dshrink-modal-root .dshrink-audio-screen:hover .dshrink-play-bubble {
+      transform: scale(1.08);
+      background: #5865f2;
+    }
+
+    #dshrink-modal-root .dshrink-player-hud {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    #dshrink-modal-root .dshrink-hud-time {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      color: #f2f3f5;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-variant-numeric: tabular-nums;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    #dshrink-modal-root .dshrink-hud-btn {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #dbdee1;
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.12s ease;
+    }
+
+    #dshrink-modal-root .dshrink-hud-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-panel {
+      background: #18191c;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 9px 11px 11px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-title {
+      color: #b5bac1;
+      font-weight: 700;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-range-badge {
+      color: #5865f2;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-track {
+      position: relative;
+      height: 38px;
+      background: #111214;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 7px;
+      overflow: hidden;
+      cursor: pointer;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-ticks {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0px, rgba(255, 255, 255, 0.06) 1px, transparent 1px, transparent 10%);
+      pointer-events: none;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-dim-left {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      background: rgba(0, 0, 0, 0.65);
+      pointer-events: none;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-dim-right {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 0%;
+      background: rgba(0, 0, 0, 0.65);
+      pointer-events: none;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-highlight {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0%;
+      width: 100%;
+      background: rgba(88, 101, 242, 0.22);
+      border-top: 2px solid #5865f2;
+      border-bottom: 2px solid #5865f2;
+      pointer-events: none;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 14px;
+      background: #5865f2;
+      cursor: ew-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      z-index: 10;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+      transition: background-color 0.12s ease;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-handle:hover,
+    #dshrink-modal-root .dshrink-timeline-handle.dragging {
+      background: #7983f5;
+      box-shadow: 0 0 10px rgba(88, 101, 242, 0.8);
+    }
+
+    #dshrink-modal-root .dshrink-timeline-handle::after {
+      content: "";
+      width: 2px;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 1px;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-handle-start {
+      border-radius: 6px 0 0 6px;
+      left: 0%;
+    }
+
+    #dshrink-modal-root .dshrink-timeline-handle-end {
+      border-radius: 0 6px 6px 0;
+      left: calc(100% - 14px);
+    }
+
+    #dshrink-modal-root .dshrink-timeline-playhead {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      left: 0%;
+      width: 2px;
+      background: #ffffff;
+      pointer-events: none;
+      z-index: 12;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    }
+
+    #dshrink-modal-root .dshrink-timeline-playhead::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -4px;
+      width: 10px;
+      height: 10px;
+      background: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    #dshrink-modal-root .dshrink-timeline-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    #dshrink-modal-root .dshrink-time-chips {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #949ba4;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #dshrink-modal-root .dshrink-time-chip {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 2px 5px;
+      border-radius: 4px;
+      color: #dbdee1;
+    }
+
+    #dshrink-modal-root .dshrink-time-chip strong {
+      color: #ffffff;
+    }
+
+    #dshrink-modal-root .dshrink-clip-preset-bar {
+      flex-shrink: 0;
+    }
+
+    #dshrink-modal-root .dshrink-split-info {
+      background: rgba(88, 101, 242, 0.12);
+      border: 1px solid rgba(88, 101, 242, 0.35);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 11.5px;
+      color: #dbdee1;
+      display: none;
+      align-items: flex-start;
+      gap: 9px;
+      line-height: 1.45;
+      margin-top: 6px;
+    }
+
+    #dshrink-modal-root .dshrink-split-icon {
+      font-size: 13px;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    #dshrink-modal-root .dshrink-split-text {
+      flex: 1;
+      min-width: 0;
     }
 
     #dshrink-modal-root .dshrink-close-btn {
@@ -636,7 +1000,11 @@
     let selectedSize = resolved.targetMB || 19.0;
     let selectedRes = isAudio ? resolved.audioQuality : resolved.videoQuality;
     let selectedFormat = resolved.format || "mp4";
+    let selectedFps = resolved.fps || "30";
     let selectedClip = "full";
+    let selectedMode = "compress";
+    let trimStart = 0;
+    let trimEnd = 0;
     let isAborted = false;
     let isEncoding = false;
     let isCompleted = false;
@@ -703,19 +1071,100 @@
           </div>
         </div>
 
-        <div class="dshrink-options-area" id="dshrink-options-area">
-          ${!isAudio ? `
-            <div class="dshrink-group" id="dshrink-clip-group" style="display: none;">
-              <label class="dshrink-label">Clip Duration</label>
-              <div class="dshrink-segment-group" id="dshrink-clip-segments">
+        <div class="dshrink-editor-card" id="dshrink-editor-card">
+          <div class="dshrink-player-wrap" id="dshrink-player-wrap">
+            ${isAudio ? `
+              <div class="dshrink-audio-screen" id="dshrink-media-screen" title="Click to play/pause audio">
+                <div class="dshrink-audio-waves" id="dshrink-audio-waves">
+                  <span class="dshrink-audio-bar" style="height: 14px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 24px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 18px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 32px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 20px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 16px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 28px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 22px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 30px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 14px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 26px;"></span>
+                  <span class="dshrink-audio-bar" style="height: 18px;"></span>
+                </div>
+                <div class="dshrink-player-overlay" id="dshrink-player-overlay">
+                  <div class="dshrink-play-bubble" id="dshrink-play-bubble">${ICONS.play}</div>
+                </div>
+                <div class="dshrink-player-hud">
+                  <span class="dshrink-hud-time" id="dshrink-hud-time">0:00 / 0:00</span>
+                  <button type="button" class="dshrink-hud-btn" id="dshrink-mute-btn" title="Toggle audio sound">${ICONS.volume}</button>
+                </div>
+              </div>
+            ` : `
+              <div class="dshrink-video-screen" id="dshrink-media-screen" title="Click to play/pause video">
+                <div class="dshrink-player-overlay" id="dshrink-player-overlay">
+                  <div class="dshrink-play-bubble" id="dshrink-play-bubble">${ICONS.play}</div>
+                </div>
+                <div class="dshrink-player-hud">
+                  <span class="dshrink-hud-time" id="dshrink-hud-time">0:00 / 0:00</span>
+                  <button type="button" class="dshrink-hud-btn" id="dshrink-mute-btn" title="Toggle audio sound">${ICONS.mute}</button>
+                </div>
+              </div>
+            `}
+          </div>
+
+          <div class="dshrink-timeline-panel" id="dshrink-timeline-panel">
+            <div class="dshrink-timeline-header">
+              <span class="dshrink-timeline-title">
+                ${ICONS.scissors}
+                <span>Clip Trimmer</span>
+              </span>
+              <span class="dshrink-timeline-range-badge" id="dshrink-range-badge">0:00 - 0:00 (0s)</span>
+            </div>
+
+            <div class="dshrink-timeline-track" id="dshrink-timeline-track" title="Click anywhere to jump playhead">
+              <div class="dshrink-timeline-ticks"></div>
+              <div class="dshrink-timeline-dim-left" id="dshrink-dim-left"></div>
+              <div class="dshrink-timeline-highlight" id="dshrink-highlight"></div>
+              <div class="dshrink-timeline-dim-right" id="dshrink-dim-right"></div>
+              <div class="dshrink-timeline-handle dshrink-timeline-handle-start" id="dshrink-handle-start" title="Drag to trim start"></div>
+              <div class="dshrink-timeline-handle dshrink-timeline-handle-end" id="dshrink-handle-end" title="Drag to trim end"></div>
+              <div class="dshrink-timeline-playhead" id="dshrink-playhead"></div>
+            </div>
+
+            <div class="dshrink-timeline-footer">
+              <div class="dshrink-time-chips">
+                <span class="dshrink-time-chip">Start: <strong id="dshrink-chip-start">0:00</strong></span>
+                <span class="dshrink-time-chip">End: <strong id="dshrink-chip-end">0:00</strong></span>
+                <span class="dshrink-time-chip">Length: <strong id="dshrink-chip-dur">0s</strong></span>
+              </div>
+              <div class="dshrink-segment-group dshrink-clip-preset-bar" id="dshrink-clip-segments">
                 ${renderSegments(PRESETS.CLIPS, "full")}
               </div>
             </div>
+          </div>
+        </div>
 
+        <div class="dshrink-options-area" id="dshrink-options-area">
+          <div class="dshrink-group">
+            <label class="dshrink-label">Action Mode</label>
+            <div class="dshrink-segment-group" id="dshrink-mode-segments">
+              ${renderSegments(PRESETS.MODES, selectedMode)}
+            </div>
+            <div class="dshrink-split-info" id="dshrink-split-info">
+              <span class="dshrink-split-icon">✂️</span>
+              <span class="dshrink-split-text" id="dshrink-split-text"></span>
+            </div>
+          </div>
+          ${!isAudio ? `
             <div class="dshrink-group">
               <label class="dshrink-label">Output Format</label>
               <div class="dshrink-segment-group" id="dshrink-format-segments">
                 ${renderSegments(PRESETS.FORMATS, selectedFormat)}
+              </div>
+            </div>
+
+            <div class="dshrink-group">
+              <label class="dshrink-label">Framerate</label>
+              <div class="dshrink-segment-group" id="dshrink-fps-segments">
+                ${renderSegments(PRESETS.FPS, selectedFps)}
               </div>
             </div>
           ` : ""}
@@ -750,6 +1199,10 @@
             <label class="dshrink-check-item" title="Boost quiet mic and game volume by 2x (+6dB)">
               <input type="checkbox" id="dshrink-boost-check" class="dshrink-checkbox-hidden" />
               <span class="dshrink-custom-check"></span>
+              <span>Boost Audio (2x)</span>
+            </label>
+          </div>
+        </div>
               <span>Boost Audio (2x)</span>
             </label>
           </div>
@@ -800,11 +1253,207 @@
     const spoilerCheck = root.querySelector("#dshrink-spoiler-check");
     const muteCheck = root.querySelector("#dshrink-mute-check");
     const boostCheck = root.querySelector("#dshrink-boost-check");
-    const clipGroup = root.querySelector("#dshrink-clip-group");
+
+    const editorCard = root.querySelector("#dshrink-editor-card");
+    const mediaScreen = root.querySelector("#dshrink-media-screen");
+    const playerOverlay = root.querySelector("#dshrink-player-overlay");
+    const playBubble = root.querySelector("#dshrink-play-bubble");
+    const hudTime = root.querySelector("#dshrink-hud-time");
+    const muteBtn = root.querySelector("#dshrink-mute-btn");
+    const timelineTrack = root.querySelector("#dshrink-timeline-track");
+    const highlight = root.querySelector("#dshrink-highlight");
+    const dimLeft = root.querySelector("#dshrink-dim-left");
+    const dimRight = root.querySelector("#dshrink-dim-right");
+    const handleStart = root.querySelector("#dshrink-handle-start");
+    const handleEnd = root.querySelector("#dshrink-handle-end");
+    const playhead = root.querySelector("#dshrink-playhead");
+    const rangeBadge = root.querySelector("#dshrink-range-badge");
+    const chipStart = root.querySelector("#dshrink-chip-start");
+    const chipEnd = root.querySelector("#dshrink-chip-end");
+    const chipDur = root.querySelector("#dshrink-chip-dur");
+    const audioWaves = root.querySelector("#dshrink-audio-waves");
+
+    const metaMedia = document.createElement(isAudio ? "audio" : "video");
+    metaMedia.preload = "metadata";
+    metaMedia.playsInline = true;
+    metaMedia.muted = !isAudio;
+    const metaUrl = URL.createObjectURL(file);
+    metaMedia.src = metaUrl;
+
+    if (!isAudio && mediaScreen) {
+      metaMedia.className = "dshrink-video-element";
+      mediaScreen.insertBefore(metaMedia, mediaScreen.firstChild);
+    }
+
+    let isDragging = null;
+    let waveAnimId = null;
+
+    function updateTimelineUI() {
+      if (!Number.isFinite(mediaDuration) || mediaDuration <= 0) return;
+      const startPct = Math.max(0, Math.min(100, (trimStart / mediaDuration) * 100));
+      const endPct = Math.max(0, Math.min(100, (trimEnd / mediaDuration) * 100));
+      const currTime = Math.max(0, Math.min(mediaDuration, metaMedia.currentTime || 0));
+      const playPct = Math.max(0, Math.min(100, (currTime / mediaDuration) * 100));
+      const dur = Math.max(0.25, trimEnd - trimStart);
+
+      if (handleStart) handleStart.style.left = `${startPct}%`;
+      if (handleEnd) handleEnd.style.left = `calc(${endPct}% - 14px)`;
+      if (highlight) {
+        highlight.style.left = `${startPct}%`;
+        highlight.style.width = `${Math.max(0, endPct - startPct)}%`;
+      }
+      if (dimLeft) dimLeft.style.width = `${startPct}%`;
+      if (dimRight) dimRight.style.width = `${Math.max(0, 100 - endPct)}%`;
+      if (playhead) playhead.style.left = `${playPct}%`;
+
+      if (rangeBadge) {
+        rangeBadge.textContent = `${Compressor.formatDuration(trimStart)} - ${Compressor.formatDuration(trimEnd)} (${Compressor.formatDuration(dur)})`;
+      }
+      if (chipStart) chipStart.textContent = Compressor.formatDuration(trimStart);
+      if (chipEnd) chipEnd.textContent = Compressor.formatDuration(trimEnd);
+      if (chipDur) chipDur.textContent = Compressor.formatDuration(dur);
+      if (hudTime) {
+        hudTime.textContent = `${Compressor.formatDuration(currTime)} / ${Compressor.formatDuration(mediaDuration)}`;
+      }
+    }
+
+    function setTrimRange(newStart, newEnd, activePreset = "custom") {
+      const maxDur = Number.isFinite(mediaDuration) && mediaDuration > 0 ? mediaDuration : 300;
+      trimStart = Math.max(0, Math.min(newStart, maxDur - 0.25));
+      trimEnd = Math.max(trimStart + 0.25, Math.min(newEnd, maxDur));
+      selectedClip = activePreset;
+
+      const clipBtns = root.querySelectorAll("#dshrink-clip-segments .dshrink-segment-btn");
+      const glider = root.querySelector("#dshrink-clip-segments .dshrink-segment-glider");
+      clipBtns.forEach((b, idx) => {
+        const isMatch = b.getAttribute("data-val") === activePreset;
+        b.classList.toggle("active", isMatch);
+        if (isMatch && glider) {
+          glider.style.transform = getGliderTransform(idx);
+        }
+      });
+
+      updateTimelineUI();
+    }
+
+    function bindHandle(handleEl, type) {
+      if (!handleEl) return;
+      handleEl.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleEl.setPointerCapture(e.pointerId);
+        isDragging = type;
+        handleEl.classList.add("dragging");
+        if (!metaMedia.paused) metaMedia.pause();
+      });
+
+      handleEl.addEventListener("pointermove", (e) => {
+        if (isDragging !== type || !mediaDuration) return;
+        const rect = timelineTrack.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const pointerX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        const targetSec = (pointerX / rect.width) * mediaDuration;
+
+        if (type === "start") {
+          trimStart = Math.max(0, Math.min(targetSec, trimEnd - 0.25));
+          metaMedia.currentTime = trimStart;
+        } else {
+          trimEnd = Math.max(trimStart + 0.25, Math.min(targetSec, mediaDuration));
+          metaMedia.currentTime = trimEnd;
+        }
+        setTrimRange(trimStart, trimEnd, "custom");
+      });
+
+      const finishDrag = (e) => {
+        if (isDragging === type) {
+          try { handleEl.releasePointerCapture(e.pointerId); } catch (err) {}
+          handleEl.classList.remove("dragging");
+          isDragging = null;
+        }
+      };
+      handleEl.addEventListener("pointerup", finishDrag);
+      handleEl.addEventListener("pointercancel", finishDrag);
+    }
+
+    bindHandle(handleStart, "start");
+    bindHandle(handleEnd, "end");
+
+    if (timelineTrack) {
+      timelineTrack.addEventListener("pointerdown", (e) => {
+        if (e.target === handleStart || e.target === handleEnd || isDragging) return;
+        const rect = timelineTrack.getBoundingClientRect();
+        if (rect.width <= 0 || !mediaDuration) return;
+        const pointerX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        const targetSec = Math.max(0, Math.min((pointerX / rect.width) * mediaDuration, mediaDuration));
+        metaMedia.currentTime = targetSec;
+        updateTimelineUI();
+      });
+    }
+
+    function togglePlay() {
+      if (metaMedia.paused) {
+        if (metaMedia.currentTime >= trimEnd || metaMedia.currentTime < trimStart) {
+          metaMedia.currentTime = trimStart;
+        }
+        metaMedia.play().catch(() => {});
+      } else {
+        metaMedia.pause();
+      }
+    }
+
+    if (mediaScreen) {
+      mediaScreen.addEventListener("click", (e) => {
+        if (e.target.closest("#dshrink-mute-btn")) return;
+        togglePlay();
+      });
+    }
+
+    function animateAudioWaves() {
+      if (!audioWaves) return;
+      const bars = audioWaves.children;
+      for (let i = 0; i < bars.length; i++) {
+        bars[i].style.height = `${Math.floor(8 + Math.random() * 26)}px`;
+      }
+      if (!metaMedia.paused) {
+        waveAnimId = requestAnimationFrame(animateAudioWaves);
+      }
+    }
+
+    metaMedia.addEventListener("play", () => {
+      if (playerOverlay) playerOverlay.classList.add("playing");
+      if (playBubble) playBubble.innerHTML = ICONS.pause;
+      if (isAudio && audioWaves) animateAudioWaves();
+    });
+
+    metaMedia.addEventListener("pause", () => {
+      if (playerOverlay) playerOverlay.classList.remove("playing");
+      if (playBubble) playBubble.innerHTML = ICONS.play;
+      if (waveAnimId) cancelAnimationFrame(waveAnimId);
+    });
+
+    metaMedia.addEventListener("timeupdate", () => {
+      if (!isDragging) {
+        if (!metaMedia.paused && metaMedia.currentTime >= trimEnd) {
+          metaMedia.currentTime = trimStart;
+        }
+        updateTimelineUI();
+      }
+    });
+
+    if (muteBtn) {
+      muteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        metaMedia.muted = !metaMedia.muted;
+        muteBtn.innerHTML = metaMedia.muted ? ICONS.mute : ICONS.volume;
+      });
+    }
 
     function close() {
       if (isAborted) return;
       isAborted = true;
+      try { metaMedia.pause(); } catch (e) {}
+      if (waveAnimId) cancelAnimationFrame(waveAnimId);
+      try { URL.revokeObjectURL(metaUrl); } catch (e) {}
       root.remove();
       callbacks.onCancel();
     }
@@ -813,14 +1462,53 @@
     cancelBtn.addEventListener("click", close);
     backdrop.addEventListener("click", close);
 
+    const modeSegments = root.querySelector("#dshrink-mode-segments");
+    const splitInfo = root.querySelector("#dshrink-split-info");
+    const startBtnSpan = startBtn.querySelector("span");
+    const resSegmentsGroup = root.querySelector("#dshrink-res-segments")?.closest(".dshrink-group");
+
+    function updateModeUI() {
+      if (selectedMode === "split") {
+        const numParts = Compressor.calculateNumParts(file.size, selectedSize);
+        if (splitInfo) {
+          splitInfo.style.display = "flex";
+          const splitText = splitInfo.querySelector("#dshrink-split-text");
+          if (splitText) {
+            splitText.innerHTML = `Will slice into <strong>${numParts} parts</strong> (under ${selectedSize}MB each) preserving full original resolution and audio fidelity.`;
+          }
+        }
+        if (startBtnSpan) startBtnSpan.textContent = `Split into ${numParts} Parts`;
+        if (resSegmentsGroup) resSegmentsGroup.style.display = "none";
+      } else {
+        if (splitInfo) splitInfo.style.display = "none";
+        if (startBtnSpan) startBtnSpan.textContent = "Compress";
+        if (resSegmentsGroup) resSegmentsGroup.style.display = "flex";
+      }
+    }
+
+    if (modeSegments) {
+      bindSegments(modeSegments, (val) => {
+        selectedMode = val;
+        updateModeUI();
+      });
+    }
+
     bindSegments(root.querySelector("#dshrink-size-segments"), (val) => {
       selectedSize = parseFloat(val);
+      updateModeUI();
     });
 
     const formatSegments = root.querySelector("#dshrink-format-segments");
     if (formatSegments) {
       bindSegments(formatSegments, (val) => {
         selectedFormat = val;
+      });
+    }
+
+    const fpsSegments = root.querySelector("#dshrink-fps-segments");
+    if (fpsSegments) {
+      bindSegments(fpsSegments, (val) => {
+        selectedFps = val;
       });
     }
 
@@ -832,21 +1520,28 @@
     if (clipSegments) {
       bindSegments(clipSegments, (val) => {
         selectedClip = val;
+        if (val === "full") {
+          setTrimRange(0, mediaDuration, "full");
+          metaMedia.currentTime = 0;
+        } else if (val === "60") {
+          setTrimRange(0, Math.min(60, mediaDuration), "60");
+          metaMedia.currentTime = 0;
+        } else if (val === "30") {
+          setTrimRange(0, Math.min(30, mediaDuration), "30");
+          metaMedia.currentTime = 0;
+        }
       });
     }
-
-    const metaMedia = document.createElement(isAudio ? "audio" : "video");
-    metaMedia.preload = "metadata";
-    const metaUrl = URL.createObjectURL(file);
-    metaMedia.src = metaUrl;
 
     metaMedia.onloadedmetadata = () => {
       mediaDuration = metaMedia.duration;
       if (durationVal && Number.isFinite(mediaDuration) && mediaDuration > 0) {
         durationVal.textContent = Compressor.formatDuration(mediaDuration);
 
-        if (!isAudio && clipGroup && mediaDuration > 60) {
-          clipGroup.style.display = "flex";
+        if (editorCard) {
+          editorCard.style.display = "flex";
+          setTrimRange(0, mediaDuration, "full");
+          metaMedia.currentTime = 0;
         }
       }
 
@@ -869,26 +1564,31 @@
             thumbCover.appendChild(cvs);
           }
         } catch (e) {}
-        URL.revokeObjectURL(metaUrl);
       };
     }
 
     startBtn.addEventListener("click", () => {
       if (isEncoding || isCompleted) return;
       isEncoding = true;
+      try { metaMedia.pause(); } catch (e) {}
       statusText.style.color = "";
       progressBar.style.width = "0%";
       percentageText.textContent = "0%";
+      if (editorCard) editorCard.style.display = "none";
       optionsArea.style.display = "none";
       progressCard.style.display = "flex";
       startBtn.disabled = true;
       if (filenameInput) filenameInput.disabled = true;
 
       callbacks.onStart({
+        mode: selectedMode,
         targetMB: selectedSize,
         quality: selectedRes,
         format: selectedFormat,
+        fps: selectedFps,
         clip: selectedClip,
+        startTime: trimStart,
+        endTime: trimEnd,
         mediaDuration,
         hostElement: thumbBox,
         customName: filenameInput ? filenameInput.value : file.name,
@@ -906,20 +1606,24 @@
         if (status) statusText.textContent = status;
         if (subtext) subtextEl.textContent = subtext;
       },
-      complete: (blob, format) => {
+      complete: (output, format) => {
         if (isAborted) return;
         isCompleted = true;
         isEncoding = false;
         progressBar.style.width = "100%";
         percentageText.textContent = "100%";
-        statusText.textContent = "Done! Compressed successfully";
-        subtextEl.textContent = `Size: ${Compressor.formatBytes(blob.size)} (${format.toUpperCase()}) &bull; Attaching...`;
+        statusText.textContent = "Done! Processed successfully";
+        const isMulti = Array.isArray(output);
+        const count = isMulti ? output.length : 1;
+        subtextEl.innerHTML = count > 1
+          ? `Created <strong>${count} parts</strong> (${format.toUpperCase()}) &bull; Attaching all to Discord...`
+          : `Size: ${Compressor.formatBytes((output.blob || output).size)} (${format.toUpperCase()}) &bull; Attaching...`;
 
         setTimeout(() => {
           if (!isAborted) {
             root.remove();
           }
-        }, 400);
+        }, 500);
       },
       error: (err) => {
         if (isAborted) return;
@@ -929,6 +1633,7 @@
         percentageText.textContent = "!";
         progressBar.style.width = "0%";
         subtextEl.textContent = "Adjust settings above and try again.";
+        if (editorCard && mediaDuration > 0) editorCard.style.display = "flex";
         optionsArea.style.display = "flex";
         startBtn.disabled = false;
         if (filenameInput) filenameInput.disabled = false;

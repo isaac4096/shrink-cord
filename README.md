@@ -4,7 +4,9 @@
 > *100% Client-Side • Universal MP4 & WebM • Batch Processing • Open Source (GPLv3) • Zero Telemetry*
 
 [![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-blue?style=flat-square)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![Firefox](https://img.shields.io/badge/Firefox-Compatible-FF7139?style=flat-square&logo=firefox-browser&logoColor=white)](#-option-3-firefox-developer-mode)
 [![Microsoft Edge](https://img.shields.io/badge/Microsoft%20Edge-Available%20on%20Store-0078D7?style=flat-square&logo=microsoft-edge&logoColor=white)](https://microsoftedge.microsoft.com/addons/detail/shrinkcord-auto-media-s/mebmpbpffobammiobcfhkneglofcjmep)
+[![Featured on FMHY](https://img.shields.io/badge/Featured%20on-FMHY-6A5ACD?style=flat-square)](https://fmhy.net/social-media-tools#discord-tools)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg?style=flat-square)](LICENSE)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local-success?style=flat-square)](#privacy--security)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-yellow.svg?style=flat-square&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/isaac4096)
@@ -37,12 +39,15 @@ You record a gaming clip or audio track on your computer. You drag it into Disco
 
 ## ✨ Features (100% Free & Open Source)
 - **Universal MP4 Export:** Native H.264 MP4 export for seamless inline playback across iPhone/iOS, Android, Mac, and Windows.
+- **Auto-Split into Parts (100% Full Quality):** Option to slice oversized media into numbered parts under 19MB each without any quality reduction.
+- **Interactive Visual Trimming:** Scrub and select custom Start and End clip timestamps with live visual frame scrubbing.
+- **60 FPS Smooth Mode:** Export high-framerate 60 FPS gaming clips or efficient 30 FPS clips under the 19MB limit.
+- **Background Tab Anti-Freezing:** Dedicated Web Worker heartbeat prevents browser background tab throttling from pausing your encoding.
 - **Native Spoiler Tagging:** One-click "Mark as Spoiler" toggle automatically instructs Discord to wrap the clip in a spoiler blur layer (`SPOILER_` prefix).
 - **Inline Clip Renaming:** Easily edit and rename your file right in the compression dialog before it gets attached.
 - **Massive File Support:** Effortlessly handles 50MB to 500MB+ videos with adaptive bitrate scaling.
 - **Batch / Queue Processing:** Drop multiple files at once — ShrinkCord queues and compresses them sequentially into your draft.
 - **Target Size Presets:** Instant presets for 19 MB (Discord Free safe limit), 48 MB (Nitro Basic), or 8 MB (Compact).
-- **Smart Clip Trimming:** One-click presets for 30s, 60s, or full video transcoding.
 - **Audio Transcoding:** Downsamples voice and studio tracks to fit under Discord limits with clean 32kHz/22kHz WAV.
 
 ---
@@ -69,11 +74,11 @@ Install ShrinkCord directly from the official verified store with automatic upda
 
 <br/>
 
-### 📦 Option 2: Manual ZIP Install (Developer Mode)
-If you prefer loading directly from GitHub releases:
+### 📦 Option 2: Chromium Manual ZIP Install (Developer Mode)
+If you prefer loading directly from GitHub releases on Chrome, Brave, or Edge:
 
 1. **Download the Extension:**
-   * Download the latest **[`shrinkcord-v1.3.0.zip`](https://github.com/Isaac4096/shrink-cord/releases/latest)** from the [Releases page](https://github.com/Isaac4096/shrink-cord/releases).
+   * Download the latest **[`shrinkcord-v1.4.0.zip`](https://github.com/Isaac4096/shrink-cord/releases/latest)** from the [Releases page](https://github.com/Isaac4096/shrink-cord/releases).
 2. **Extract the ZIP:**
    * Right-click the downloaded `.zip` file and select **Extract All...** to an accessible folder (e.g., `Documents/ShrinkCord`).
 3. **Load into Browser:**
@@ -81,8 +86,21 @@ If you prefer loading directly from GitHub releases:
    * Turn **ON** the **Developer mode** toggle in the top-right corner.
    * Click the **"Load unpacked"** button in the top-left corner.
    * Select the extracted folder containing `manifest.json`.
-4. **Done!**
-   * Open [Discord Web](https://discord.com/app), drag and drop any video or audio file larger than 20MB into chat, and let ShrinkCord squeeze it automatically!
+
+<br/>
+
+### 🦊 Option 3: Mozilla Firefox (Developer Mode)
+1. In Firefox, navigate to `about:debugging#/runtime/this-firefox`.
+2. Click **"Load Temporary Add-on..."**.
+3. Select the `manifest.json` file inside the extracted ShrinkCord folder.
+4. ShrinkCord is now active on Discord Web in Firefox!
+
+<br/>
+
+### ⚡ Option 4: Vencord Plugin (Discord Desktop Client)
+Want to use ShrinkCord inside the native Discord Desktop app instead of a browser?
+1. Check the [`vencord-plugin/`](vencord-plugin/) folder.
+2. Follow the instructions in [`vencord-plugin/README.md`](vencord-plugin/README.md) to add ShrinkCord to your Vencord installation!
 
 ---
 
@@ -91,6 +109,7 @@ Click the ShrinkCord icon in your browser toolbar to customize:
 * **Default Video Format:** `MP4 (Universal)` (best for iPhone & Discord embeds) or `WebM`.
 * **Default Target Size:** `19.0 MB` (Discord Free safe limit), `48.0 MB` (Nitro Basic), or `8.0 MB` (Compact).
 * **Default Video Quality:** `1080p FHD` (crisp quality), `720p HD` (balanced), or `480p SD` (compact).
+* **Default Framerate:** `30 FPS (Standard)` or `60 FPS (Smooth Gaming Clips)`.
 
 ---
 

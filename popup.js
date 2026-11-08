@@ -5,28 +5,36 @@
 (function () {
   "use strict";
 
+  const extApi = typeof chrome !== "undefined" && chrome?.storage ? chrome : (typeof browser !== "undefined" ? browser : null);
   const controls = {
     format: document.getElementById("default-format"),
     targetMB: document.getElementById("default-size"),
-    quality: document.getElementById("default-quality")
+    quality: document.getElementById("default-quality"),
+    fps: document.getElementById("default-fps")
   };
+  const keys = Object.keys(controls);
 
   function saveSettings() {
+    if (!extApi?.storage?.local) return;
     const payload = {};
-    if (controls.format) payload.format = controls.format.value;
-    if (controls.targetMB) payload.targetMB = parseFloat(controls.targetMB.value);
-    if (controls.quality) payload.quality = controls.quality.value;
-    chrome.storage.local.set(payload);
+    keys.forEach((key) => {
+      const el = controls[key];
+      if (el) payload[key] = key === "targetMB" ? parseFloat(el.value) : el.value;
+    });
+    extApi.storage.local.set(payload);
   }
 
-  chrome.storage.local.get(["format", "targetMB", "quality"], (res) => {
-    if (!res) return;
-    if (res.format && controls.format) controls.format.value = res.format;
-    if (res.targetMB && controls.targetMB) controls.targetMB.value = String(res.targetMB);
-    if (res.quality && controls.quality) controls.quality.value = res.quality;
-  });
+  if (extApi?.storage?.local) {
+    extApi.storage.local.get(keys, (res = {}) => {
+      keys.forEach((key) => {
+        if (res[key] !== undefined && controls[key]) {
+          controls[key].value = String(res[key]);
+        }
+      });
+    });
+  }
 
-  Object.values(controls).forEach((el) => {
-    if (el) el.addEventListener("change", saveSettings);
+  keys.forEach((key) => {
+    controls[key]?.addEventListener("change", saveSettings);
   });
 })();

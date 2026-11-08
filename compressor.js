@@ -13,12 +13,21 @@
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
   const PRESETS = {
+    MODES: [
+      { val: "compress", label: "Squeeze (1 File)" },
+      { val: "split", label: "Cut into Parts" }
+    ],
     FORMATS: [
       { val: "mp4", label: "MP4 (Universal)" },
       { val: "webm", label: "WebM" }
     ],
+    FPS: [
+      { val: "30", label: "30 FPS" },
+      { val: "60", label: "60 FPS" }
+    ],
     CLIPS: [
       { val: "full", label: "Full Video" },
+      { val: "custom", label: "Custom Trim" },
       { val: "60", label: "60s Clip" },
       { val: "30", label: "30s Clip" }
     ],
@@ -44,11 +53,13 @@
     const vidQual = String(saved.quality || "");
     const audQual = String(saved.audioQuality || saved.quality || "");
     const format = String(saved.format || "mp4").toLowerCase();
+    const fps = (saved.fps === "60" || saved.fps === 60) ? "60" : "30";
     return {
       targetMB: PRESETS.SIZES.some((s) => s.val === size) ? size : 19.0,
       videoQuality: PRESETS.VIDEO_QUALITIES.some((q) => q.val === vidQual) ? vidQual : "1080",
       audioQuality: PRESETS.AUDIO_QUALITIES.some((q) => q.val === audQual) ? audQual : "32000",
-      format: PRESETS.FORMATS.some((f) => f.val === format) ? format : "mp4"
+      format: PRESETS.FORMATS.some((f) => f.val === format) ? format : "mp4",
+      fps
     };
   }
 
@@ -65,6 +76,11 @@
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}m ${secs < 10 ? "0" : ""}${secs}s`;
+  }
+
+  function calculateNumParts(fileSize, targetMB) {
+    const targetBytes = (parseFloat(targetMB) || 19.0) * 1024 * 1024 * 0.94;
+    return Math.max(2, Math.ceil((fileSize || 0) / targetBytes));
   }
 
   function matchesMedia(file, mimePrefix, extRegex) {
@@ -175,7 +191,11 @@
         callbacks.onProgress(45, "Resampling audio...", `Fitting target under ${targetMB}MB...`);
 
         const totalDuration = decodedBuffer.duration;
-        let duration = (maxDuration && maxDuration > 0 && maxDuration < totalDuration) ? maxDuration : totalDuration;
+        const startTime = Math.max(0, parseFloat(audioOptions.startTime) || 0);
+        let endTime = Math.max(0, parseFloat(audioOptions.endTime) || 0);
+        if (!endTime || endTime > totalDuration) endTime = totalDuration;
+        const activeDuration = Math.max(0.5, endTime - startTime);
+        let duration = (maxDuration && maxDuration > 0 && maxDuration < activeDuration) ? maxDuration : activeDuration;
         const targetBytes = (targetMB * 1024 * 1024 * 0.94) - 44;
 
         let channels = qualitySetting === "voice" ? 1 : Math.min(2, decodedBuffer.numberOfChannels);
@@ -198,6 +218,38 @@
           }
         }
 
+        if (audioOptions.mode === "split") {
+          const numParts = calculateNumParts(file.size, targetMB);
+          const partDur = duration / numParts;
+          const blobs = [];
+          for (let p = 0; p < numParts; p++) {
+            const startSec = startTime + p * partDur;
+            const endSec = (p === numParts - 1) ? (startTime + duration) : (startTime + (p + 1) * partDur);
+            const chunkDur = endSec - startSec;
+            const chunkFrames = Math.max(1, Math.ceil(chunkDur * sampleRate));
+            const chunkCtx = new OfflineAudioContext(channels, chunkFrames, sampleRate);
+            const chunkSrc = chunkCtx.createBufferSource();
+            chunkSrc.buffer = decodedBuffer;
+            if (audioOptions.audioBoost) {
+              const boost = chunkCtx.createGain();
+              boost.gain.value = 2.0;
+              chunkSrc.connect(boost);
+              boost.connect(chunkCtx.destination);
+            } else {
+              chunkSrc.connect(chunkCtx.destination);
+            }
+            chunkSrc.start(0, startSec, chunkDur);
+            const rendered = await chunkCtx.startRendering();
+            blobs.push(audioBufferToWavBlob(rendered));
+          }
+          decodedBuffer = null;
+          arrayBuffer = null;
+          if (isStopped) return;
+          callbacks.onProgress(100, "Audio ready!", "Attaching parts to Discord...");
+          callbacks.onComplete(blobs, "wav");
+          return;
+        }
+
         const frameCount = Math.max(1, Math.ceil(duration * sampleRate));
         const offlineCtx = new OfflineAudioContext(channels, frameCount, sampleRate);
 
@@ -213,9 +265,11 @@
           source.connect(offlineCtx.destination);
         }
 
-        source.start(0, 0, duration);
+        source.start(0, startTime, duration);
 
         const renderedBuffer = await offlineCtx.startRendering();
+        decodedBuffer = null;
+        arrayBuffer = null;
 
         if (isStopped) return;
 
@@ -263,17 +317,79 @@
     );
   }
 
-  function compressVideo(
+  function createHeartbeatWorker(fps, onTick) {
+    const targetFps = fps === 60 ? 60 : 30;
+    const intervalMs = Math.max(12, Math.floor(1000 / targetFps));
+    try {
+      const workerScript = `
+        let timer = null;
+        self.onmessage = function(e) {
+          if (e.data === 'start') {
+            if (!timer) timer = setInterval(function() { self.postMessage('tick'); }, ${intervalMs});
+          } else if (e.data === 'stop') {
+            if (timer) { clearInterval(timer); timer = null; }
+          }
+        };
+      `;
+      const blob = new Blob([workerScript], { type: "application/javascript" });
+      const workerUrl = URL.createObjectURL(blob);
+      const worker = new Worker(workerUrl);
+      worker.onmessage = onTick;
+      worker.postMessage("start");
+      return {
+        stop: () => {
+          try {
+            worker.postMessage("stop");
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+          } catch (e) {}
+        }
+      };
+    } catch (e) {
+      const timerId = setInterval(onTick, intervalMs);
+      return {
+        stop: () => clearInterval(timerId)
+      };
+    }
+  }
+
+  function parseClipRange(config, defaultFps = 30) {
+    let startTime = 0;
+    let endTime = 0;
+    let fps = defaultFps;
+
+    if (typeof config === "object" && config !== null) {
+      startTime = Math.max(0, parseFloat(config.startTime) || 0);
+      endTime = Math.max(0, parseFloat(config.endTime) || 0);
+      if (!endTime && config.maxDuration) {
+        endTime = startTime + parseFloat(config.maxDuration);
+      }
+      fps = (config.fps === 60 || config.fps === "60") ? 60 : 30;
+    } else if (typeof config === "number") {
+      endTime = config > 0 ? config : 0;
+    } else if (typeof config === "string" && config !== "full" && config !== "custom") {
+      endTime = parseFloat(config) || 0;
+    }
+
+    return { startTime, endTime, fps };
+  }
+
+  function compressVideoSingle(
     file,
     targetMB,
     resolutionSetting,
-    maxDuration,
+    clipConfig,
     callbacks,
     hostElement,
     formatSetting = "mp4",
     audioOptions = {}
   ) {
     callbacks.onProgress(5, "Preparing media pipeline...", "Initializing encoder...");
+
+    const parsedClip = parseClipRange(clipConfig, 30);
+    let startTime = parsedClip.startTime;
+    let endTime = parsedClip.endTime;
+    const targetFps = audioOptions.fps ? ((audioOptions.fps === 60 || audioOptions.fps === "60") ? 60 : 30) : parsedClip.fps;
 
     const videoEl = document.createElement("video");
     videoEl.preload = "auto";
@@ -296,7 +412,7 @@
     let isStopped = false;
     let rvfcId = null;
     let animFrameId = null;
-    let fallbackInterval = null;
+    let heartbeatWorker = null;
     let frameCounter = 0;
     let recorder = null;
     let audioCtx = null;
@@ -306,9 +422,9 @@
     let targetHeight = 0;
 
     function stopFrameLoop() {
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
-        fallbackInterval = null;
+      if (heartbeatWorker) {
+        heartbeatWorker.stop();
+        heartbeatWorker = null;
       }
       if (animFrameId) {
         cancelAnimationFrame(animFrameId);
@@ -341,12 +457,21 @@
       const rawDuration = isValidDuration(videoEl.duration)
         ? videoEl.duration
         : Math.max(10, Math.min(300, file.size / (512 * 1024)));
-      const duration = (maxDuration && maxDuration > 0) ? Math.min(rawDuration, maxDuration) : rawDuration;
+
+      if (endTime <= 0 || endTime > rawDuration) {
+        endTime = rawDuration;
+      }
+      if (startTime >= endTime) {
+        startTime = 0;
+      }
+
+      const duration = Math.max(0.5, endTime - startTime);
 
       const targetTotalBits = targetMB * 8 * 1024 * 1024 * 0.92;
       const totalAvailableBps = Math.floor(targetTotalBits / Math.max(1, duration));
       const audioBps = isMuted ? 0 : (totalAvailableBps < 250000 ? 48000 : (totalAvailableBps < 500000 ? 64000 : 96000));
-      const videoBps = Math.max(80000, Math.min(totalAvailableBps - audioBps, 8500000));
+      const maxVideoBitrate = targetFps === 60 ? 12000000 : 8500000;
+      const videoBps = Math.max(80000, Math.min(totalAvailableBps - audioBps, maxVideoBitrate));
 
       const origWidth = videoEl.videoWidth || 1920;
       const origHeight = videoEl.videoHeight || 1080;
@@ -354,9 +479,10 @@
       targetHeight = origHeight;
 
       let maxShortEdge = parseInt(resolutionSetting, 10) || 1080;
-      if (videoBps < 220000 && maxShortEdge > 360) maxShortEdge = 360;
-      else if (videoBps < 450000 && maxShortEdge > 480) maxShortEdge = 480;
-      else if (videoBps < 900000 && maxShortEdge > 720) maxShortEdge = 720;
+      const effectiveBitrate = targetFps === 60 ? videoBps * 0.75 : videoBps;
+      if (effectiveBitrate < 220000 && maxShortEdge > 360) maxShortEdge = 360;
+      else if (effectiveBitrate < 450000 && maxShortEdge > 480) maxShortEdge = 480;
+      else if (effectiveBitrate < 900000 && maxShortEdge > 720) maxShortEdge = 720;
 
       const currentShortEdge = Math.min(targetWidth, targetHeight);
       if (currentShortEdge > maxShortEdge) {
@@ -375,7 +501,7 @@
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      const canvasStream = canvas.captureStream(30);
+      const canvasStream = canvas.captureStream(targetFps);
       const videoTrack = canvasStream.getVideoTracks()[0];
       const combinedTracks = videoTrack ? [videoTrack] : [];
 
@@ -460,7 +586,7 @@
               let finalBlob = new Blob(chunks, { type: mimeType });
               if (!isMp4) {
                 try {
-                  const recordedMs = Math.round(Math.min(videoEl.currentTime || duration, duration) * 1000);
+                  const recordedMs = Math.round(duration * 1000);
                   const patcher = window.ysFixWebmDuration || window.fixWebmDuration;
                   if (recordedMs > 0 && typeof patcher === "function") {
                     const patched = await patcher(finalBlob, recordedMs, { logger: false });
@@ -483,7 +609,7 @@
       function drawCurrentFrame() {
         if (isStopped || isFinishing || videoEl.paused || videoEl.ended) return;
 
-        if (videoEl.currentTime >= duration || videoEl.ended) {
+        if (videoEl.currentTime >= endTime || videoEl.ended) {
           finishRecording();
           return;
         }
@@ -496,14 +622,15 @@
           try { videoTrack.requestFrame(); } catch (e) {}
         }
 
-        const pct = Math.min(96, Math.max(5, Math.round((videoEl.currentTime / duration) * 94)));
-        const elapsedSec = Math.floor(videoEl.currentTime);
+        const elapsedInClip = Math.max(0, videoEl.currentTime - startTime);
+        const pct = Math.min(96, Math.max(5, Math.round((elapsedInClip / duration) * 94)));
+        const elapsedSec = Math.floor(elapsedInClip);
         const totalSec = Math.floor(duration);
         const remainingSec = Math.max(0, totalSec - elapsedSec);
 
         callbacks.onProgress(
           pct,
-          `Encoding: ${elapsedSec}s / ${totalSec}s`,
+          `Encoding: ${elapsedSec}s / ${totalSec}s (${targetFps} FPS)`,
           `HD video & audio in sync • ~${remainingSec}s left`
         );
 
@@ -516,35 +643,48 @@
 
       videoEl.onended = finishRecording;
 
-      videoEl.play().then(() => {
+      function startEncoding() {
         if (isStopped) return;
-        if (audioCtx && audioCtx.state === "suspended") {
-          audioCtx.resume().catch(() => {});
-        }
-        recorder.start(100);
-        callbacks.onProgress(8, "Encoding video stream...", "Compressing frames...");
-        drawCurrentFrame();
-
-        fallbackInterval = setInterval(() => {
-          if (isStopped || isFinishing) {
-            clearInterval(fallbackInterval);
-            return;
-          }
-          if (videoEl.currentTime >= duration || videoEl.ended) {
-            finishRecording();
-          }
-        }, 200);
-      }).catch((playErr) => {
-        videoEl.muted = true;
         videoEl.play().then(() => {
           if (isStopped) return;
+          if (audioCtx && audioCtx.state === "suspended") {
+            audioCtx.resume().catch(() => {});
+          }
           recorder.start(100);
+          callbacks.onProgress(8, "Encoding video stream...", `Transcoding at ${targetFps} FPS...`);
           drawCurrentFrame();
-        }).catch((err) => {
-          callbacks.onError(new Error("Playback blocked by browser: " + err.message));
-          cleanup();
+
+          heartbeatWorker = createHeartbeatWorker(targetFps, () => {
+            if (isStopped || isFinishing) return;
+            if (videoEl.currentTime >= endTime || videoEl.ended) {
+              finishRecording();
+            } else if (document.hidden) {
+              drawCurrentFrame();
+            }
+          });
+        }).catch((playErr) => {
+          videoEl.muted = true;
+          videoEl.play().then(() => {
+            if (isStopped) return;
+            recorder.start(100);
+            drawCurrentFrame();
+          }).catch((err) => {
+            callbacks.onError(new Error("Playback blocked by browser: " + err.message));
+            cleanup();
+          });
         });
-      });
+      }
+
+      if (startTime > 0) {
+        callbacks.onProgress(6, "Seeking to clip start point...", `Starting at ${formatDuration(startTime)}...`);
+        videoEl.currentTime = startTime;
+        videoEl.addEventListener("seeked", function onSeeked() {
+          videoEl.removeEventListener("seeked", onSeeked);
+          startEncoding();
+        }, { once: true });
+      } else {
+        startEncoding();
+      }
     };
 
     videoEl.onerror = function () {
@@ -556,6 +696,106 @@
     return cleanup;
   }
 
+  function compressVideo(
+    file,
+    targetMB,
+    resolutionSetting,
+    clipConfig,
+    callbacks,
+    hostElement,
+    formatSetting = "mp4",
+    audioOptions = {}
+  ) {
+    if (clipConfig && clipConfig.mode === "split") {
+      const numParts = calculateNumParts(file.size, targetMB);
+      const metaEl = document.createElement("video");
+      metaEl.preload = "metadata";
+      const fileUrl = URL.createObjectURL(file);
+      metaEl.src = fileUrl;
+
+      let isAborted = false;
+      let activeSubCleanup = null;
+
+      metaEl.onloadedmetadata = () => {
+        const totalDuration = isValidDuration(metaEl.duration) ? metaEl.duration : 60;
+        URL.revokeObjectURL(fileUrl);
+        if (isAborted) return;
+
+        const range = parseClipRange(clipConfig, 30);
+        const startTime = range.startTime || 0;
+        const endTime = (range.endTime > 0 && range.endTime <= totalDuration) ? range.endTime : totalDuration;
+        const activeDuration = Math.max(1, endTime - startTime);
+        const partDuration = activeDuration / numParts;
+
+        const chunks = [];
+        for (let i = 0; i < numParts; i++) {
+          chunks.push({
+            start: startTime + i * partDuration,
+            end: i === numParts - 1 ? endTime : startTime + (i + 1) * partDuration,
+            index: i + 1,
+            total: numParts
+          });
+        }
+
+        const recordedBlobs = [];
+        let currentIndex = 0;
+
+        function runNextChunk() {
+          if (isAborted) return;
+          if (currentIndex >= chunks.length) {
+            callbacks.onProgress(100, "All parts ready!", "Attaching parts to Discord...");
+            callbacks.onComplete(recordedBlobs, formatSetting);
+            return;
+          }
+
+          const chunk = chunks[currentIndex];
+          const subCallbacks = {
+            onProgress: (pct, status, subtext) => {
+              if (isAborted) return;
+              const overall = Math.round((currentIndex / chunks.length) * 100 + (pct / chunks.length));
+              callbacks.onProgress(overall, `Part ${chunk.index}/${chunk.total}: ${status}`, subtext);
+            },
+            onComplete: (blob) => {
+              if (isAborted) return;
+              recordedBlobs.push(blob);
+              currentIndex++;
+              runNextChunk();
+            },
+            onError: (err) => {
+              if (isAborted) return;
+              callbacks.onError(err);
+            }
+          };
+
+          activeSubCleanup = compressVideoSingle(
+            file,
+            targetMB,
+            resolutionSetting,
+            { startTime: chunk.start, endTime: chunk.end, fps: range.fps },
+            subCallbacks,
+            hostElement,
+            formatSetting,
+            audioOptions
+          );
+        }
+
+        runNextChunk();
+      };
+
+      metaEl.onerror = () => {
+        URL.revokeObjectURL(fileUrl);
+        callbacks.onError(new Error("Unable to read video metadata for splitting"));
+      };
+
+      return function cleanup() {
+        isAborted = true;
+        if (activeSubCleanup) activeSubCleanup();
+      };
+    }
+
+    return compressVideoSingle(file, targetMB, resolutionSetting, clipConfig, callbacks, hostElement, formatSetting, audioOptions);
+  }
+
   window.ShrinkCord = window.ShrinkCord || {};
   window.ShrinkCord.Compressor = {
     DISCORD_LIMIT_BYTES,
@@ -563,6 +803,7 @@
     resolveSettings,
     formatBytes,
     formatDuration,
+    calculateNumParts,
     isVideoFile,
     isAudioFile,
     isMediaFile,
