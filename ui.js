@@ -381,26 +381,27 @@
 
     #dshrink-modal-root .dshrink-timeline-playhead {
       position: absolute;
-      top: -2px;
-      bottom: -2px;
+      top: 0;
+      bottom: 0;
       left: 0%;
       width: 2px;
       background: #ffffff;
       pointer-events: none;
-      z-index: 12;
-      box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+      z-index: 15;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
+      transition: opacity 0.12s ease;
     }
 
     #dshrink-modal-root .dshrink-timeline-playhead::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: -4px;
-      width: 10px;
-      height: 10px;
+      top: 1px;
+      left: -3px;
+      width: 8px;
+      height: 6px;
       background: #ffffff;
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+      border-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     }
 
     #dshrink-modal-root .dshrink-timeline-footer {
@@ -705,25 +706,15 @@
     #dshrink-modal-root .dshrink-segment-group {
       position: relative;
       display: flex;
+      align-items: center;
       background: #111214;
       border-radius: 8px;
       padding: 3px;
       gap: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       user-select: none;
-    }
-
-    #dshrink-modal-root .dshrink-segment-glider {
-      position: absolute;
-      top: 3px;
-      bottom: 3px;
-      left: 3px;
-      background: #35373c;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      pointer-events: none;
-      z-index: 1;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     #dshrink-modal-root .dshrink-segment-btn {
@@ -732,24 +723,28 @@
       background: transparent;
       border: none;
       color: #949ba4;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
-      padding: 6px 4px;
+      padding: 5px 6px;
       border-radius: 6px;
       cursor: pointer;
-      transition: color 0.15s ease;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 2;
       text-align: center;
       white-space: nowrap;
+      line-height: 1.2;
     }
 
     #dshrink-modal-root .dshrink-segment-btn:hover {
       color: #dbdee1;
+      background: rgba(255, 255, 255, 0.04);
     }
 
     #dshrink-modal-root .dshrink-segment-btn.active {
-      color: #ffffff;
+      background: #35373c !important;
+      color: #ffffff !important;
       font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     }
 
     #dshrink-modal-root .dshrink-toggles-row {
@@ -992,39 +987,27 @@
     }
   }
 
-  function getGliderTransform(idx) {
-    return `translateX(calc(${idx * 100}% + ${idx * 3}px))`;
-  }
-
   function renderSegments(items, activeVal) {
-    const count = items.length;
     let activeIdx = items.findIndex(
       ({ val }) => Number(val) === Number(activeVal) || String(val) === String(activeVal)
     );
     if (activeIdx < 0) activeIdx = 0;
 
-    const gliderStyle = `width: calc((100% - 6px - ${(count - 1) * 3}px) / ${count}); transform: ${getGliderTransform(activeIdx)};`;
-    const buttonsHtml = items
+    return items
       .map(({ val, label, id }, idx) => {
         const isActive = idx === activeIdx;
         return `<button type="button" class="dshrink-segment-btn${isActive ? " active" : ""}" data-val="${val}"${id ? ` id="${id}"` : ""}>${label}</button>`;
       })
       .join("");
-
-    return `<div class="dshrink-segment-glider" style="${gliderStyle}"></div>${buttonsHtml}`;
   }
 
   function bindSegments(container, onSelect) {
     if (!container) return;
     const buttons = Array.from(container.querySelectorAll(".dshrink-segment-btn"));
-    const glider = container.querySelector(".dshrink-segment-glider");
-    buttons.forEach((btn, idx) => {
+    buttons.forEach((btn) => {
       btn.addEventListener("click", () => {
         buttons.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
-        if (glider) {
-          glider.style.transform = getGliderTransform(idx);
-        }
         onSelect(btn.getAttribute("data-val"));
       });
     });
@@ -1349,7 +1332,9 @@
       }
       if (dimLeft) dimLeft.style.width = `${startPct}%`;
       if (dimRight) dimRight.style.width = `${Math.max(0, 100 - endPct)}%`;
-      if (playhead) playhead.style.left = `${playPct}%`;
+      if (playhead) {
+        playhead.style.left = `clamp(3px, ${playPct}%, calc(100% - 5px))`;
+      }
 
       if (rangeBadge) {
         rangeBadge.textContent = `${Compressor.formatDuration(trimStart)} - ${Compressor.formatDuration(trimEnd)} (${Compressor.formatDuration(dur)})`;
@@ -1369,13 +1354,8 @@
       selectedClip = activePreset;
 
       const clipBtns = root.querySelectorAll("#dshrink-clip-segments .dshrink-segment-btn");
-      const glider = root.querySelector("#dshrink-clip-segments .dshrink-segment-glider");
-      clipBtns.forEach((b, idx) => {
-        const isMatch = b.getAttribute("data-val") === activePreset;
-        b.classList.toggle("active", isMatch);
-        if (isMatch && glider) {
-          glider.style.transform = getGliderTransform(idx);
-        }
+      clipBtns.forEach((b) => {
+        b.classList.toggle("active", b.getAttribute("data-val") === activePreset);
       });
 
       updateTimelineUI();
@@ -1561,23 +1541,6 @@
       selectedRes = val;
     });
 
-    const clipSegments = root.querySelector("#dshrink-clip-segments");
-    if (clipSegments) {
-      bindSegments(clipSegments, (val) => {
-        selectedClip = val;
-        if (val === "full") {
-          setTrimRange(0, mediaDuration, "full");
-          metaMedia.currentTime = 0;
-        } else if (val === "60") {
-          setTrimRange(0, Math.min(60, mediaDuration), "60");
-          metaMedia.currentTime = 0;
-        } else if (val === "30") {
-          setTrimRange(0, Math.min(30, mediaDuration), "30");
-          metaMedia.currentTime = 0;
-        }
-      });
-    }
-
     metaMedia.onloadedmetadata = () => {
       mediaDuration = metaMedia.duration;
       if (durationVal && Number.isFinite(mediaDuration) && mediaDuration > 0) {
@@ -1585,6 +1548,30 @@
 
         if (editorCard) {
           editorCard.style.display = "flex";
+          const clipContainer = root.querySelector("#dshrink-clip-segments");
+          if (clipContainer) {
+            const presets = [
+              { val: "full", label: "Full" },
+              { val: "custom", label: "Custom" }
+            ];
+            if (mediaDuration > 60) presets.push({ val: "60", label: "60s" });
+            if (mediaDuration > 30) presets.push({ val: "30", label: "30s" });
+
+            clipContainer.innerHTML = renderSegments(presets, "full");
+            bindSegments(clipContainer, (val) => {
+              selectedClip = val;
+              if (val === "full") {
+                setTrimRange(0, mediaDuration, "full");
+                metaMedia.currentTime = 0;
+              } else if (val === "60") {
+                setTrimRange(0, Math.min(60, mediaDuration), "60");
+                metaMedia.currentTime = 0;
+              } else if (val === "30") {
+                setTrimRange(0, Math.min(30, mediaDuration), "30");
+                metaMedia.currentTime = 0;
+              }
+            });
+          }
           setTrimRange(0, mediaDuration, "full");
           metaMedia.currentTime = 0;
         }
