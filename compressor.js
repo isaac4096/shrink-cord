@@ -18,7 +18,7 @@
       { val: "split", label: "Cut into Parts" }
     ],
     FORMATS: [
-      { val: "mp4", label: "MP4 (Universal)" },
+      { val: "mp4", label: "MP4" },
       { val: "webm", label: "WebM" }
     ],
     FPS: [
@@ -26,25 +26,25 @@
       { val: "60", label: "60 FPS" }
     ],
     CLIPS: [
-      { val: "full", label: "Full Video" },
-      { val: "custom", label: "Custom Trim" },
-      { val: "60", label: "60s Clip" },
-      { val: "30", label: "30s Clip" }
+      { val: "full", label: "Full" },
+      { val: "custom", label: "Custom" },
+      { val: "60", label: "60s" },
+      { val: "30", label: "30s" }
     ],
     SIZES: [
-      { val: 19.0, label: "19 MB (Free)" },
-      { val: 48.0, label: "48 MB (Nitro)" },
-      { val: 8.0, label: "8 MB (Compact)" }
+      { val: 19.0, label: "19 MB" },
+      { val: 48.0, label: "48 MB" },
+      { val: 8.0, label: "8 MB" }
     ],
     VIDEO_QUALITIES: [
-      { val: "1080", label: "1080p FHD" },
-      { val: "720", label: "720p HD" },
-      { val: "480", label: "480p SD" }
+      { val: "1080", label: "1080p" },
+      { val: "720", label: "720p" },
+      { val: "480", label: "480p" }
     ],
     AUDIO_QUALITIES: [
-      { val: "32000", label: "Studio (32kHz)" },
-      { val: "22050", label: "High (22kHz)" },
-      { val: "voice", label: "Voice (Mono)" }
+      { val: "32000", label: "High (32k)" },
+      { val: "22050", label: "Med (22k)" },
+      { val: "voice", label: "Voice" }
     ]
   };
 

@@ -69,18 +69,37 @@
       position: relative;
       background: radial-gradient(ellipse 110% 70% at 50% -10%, #262c66 0%, #202225 65%, #1e1f22 100%);
       color: #dbdee1;
-      width: 460px;
-      max-width: 92vw;
+      width: 480px;
+      max-width: 94vw;
       border-radius: 16px;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
-      overflow-x: hidden;
-      overflow-y: auto;
       max-height: 92vh;
       display: flex;
       flex-direction: column;
       animation: dshrink-scale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 10;
-      padding: 22px 22px 18px 22px;
+      padding: 18px 20px 14px 20px;
+      overflow: hidden;
+    }
+
+    #dshrink-modal-root .dshrink-body {
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding-right: 2px;
+      scrollbar-width: thin;
+      scrollbar-color: #35373c transparent;
+    }
+
+    #dshrink-modal-root .dshrink-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #dshrink-modal-root .dshrink-body::-webkit-scrollbar-thumb {
+      background: #35373c;
+      border-radius: 3px;
     }
 
     #dshrink-modal-root .dshrink-editor-card {
@@ -90,7 +109,7 @@
       overflow: hidden;
       display: none;
       flex-direction: column;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
@@ -103,7 +122,7 @@
     #dshrink-modal-root .dshrink-video-screen {
       position: relative;
       width: 100%;
-      height: 185px;
+      height: 155px;
       background: #000000;
       display: flex;
       align-items: center;
@@ -271,10 +290,10 @@
 
     #dshrink-modal-root .dshrink-timeline-track {
       position: relative;
-      height: 38px;
+      height: 32px;
       background: #111214;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 7px;
+      border-radius: 6px;
       overflow: hidden;
       cursor: pointer;
       touch-action: none;
@@ -324,7 +343,7 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 14px;
+      width: 12px;
       background: #5865f2;
       cursor: ew-resize;
       display: flex;
@@ -345,19 +364,19 @@
     #dshrink-modal-root .dshrink-timeline-handle::after {
       content: "";
       width: 2px;
-      height: 14px;
+      height: 12px;
       background: rgba(255, 255, 255, 0.85);
       border-radius: 1px;
     }
 
     #dshrink-modal-root .dshrink-timeline-handle-start {
-      border-radius: 6px 0 0 6px;
+      border-radius: 5px 0 0 5px;
       left: 0%;
     }
 
     #dshrink-modal-root .dshrink-timeline-handle-end {
-      border-radius: 0 6px 6px 0;
-      left: calc(100% - 14px);
+      border-radius: 0 5px 5px 0;
+      left: calc(100% - 12px);
     }
 
     #dshrink-modal-root .dshrink-timeline-playhead {
@@ -482,14 +501,15 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      flex-shrink: 0;
     }
 
     #dshrink-modal-root .dshrink-hero-logo-box {
       position: relative;
-      width: 44px;
-      height: 44px;
-      margin: 2px auto 8px auto;
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 5px auto;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -497,10 +517,10 @@
 
     #dshrink-modal-root .dshrink-hero-logo {
       position: relative;
-      width: 44px;
-      height: 44px;
+      width: 34px;
+      height: 34px;
       object-fit: contain;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
     }
 
     #dshrink-modal-root .dshrink-badge {
@@ -508,31 +528,48 @@
       background: #ffffff;
       color: #111214;
       font-family: var(--font-display, "gg sans", "ABC Ginto Normal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif) !important;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 2.5px 10px;
+      padding: 2px 8px;
       border-radius: 999px;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
-      margin-bottom: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      margin-bottom: 4px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
     #dshrink-modal-root .dshrink-title {
       font-family: var(--font-display, "gg sans", "ABC Ginto Normal", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif) !important;
-      font-size: 20px;
+      font-size: 16.5px;
       font-weight: 800;
-      line-height: 24px;
+      line-height: 20px;
       color: #ffffff;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       letter-spacing: -0.015em;
     }
 
     #dshrink-modal-root .dshrink-subtitle {
-      font-size: 13px;
-      line-height: 17px;
-      color: #b5bac1;
+      font-size: 12px;
+      line-height: 15px;
+      color: #949ba4;
       max-width: 390px;
+    }
+
+    #dshrink-modal-root .dshrink-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+
+    #dshrink-modal-root .dshrink-footer-wrap {
+      flex-shrink: 0;
+      padding-top: 10px;
+      margin-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
     #dshrink-modal-root .dshrink-file-card {
@@ -718,19 +755,21 @@
     #dshrink-modal-root .dshrink-toggles-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      justify-content: flex-start;
+      gap: 14px;
       padding: 3px 2px 0 2px;
+      flex-wrap: nowrap;
     }
 
     #dshrink-modal-root .dshrink-check-item {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       cursor: pointer;
       user-select: none;
-      font-size: 12px;
+      font-size: 11.5px;
       color: #949ba4;
+      white-space: nowrap;
       transition: color 0.15s ease;
     }
 
@@ -1035,202 +1074,208 @@
           ${ICONS.close}
         </button>
 
-        <div class="dshrink-hero">
-          <div class="dshrink-hero-logo-box">
-            <img class="dshrink-hero-logo" src="${LOGO_URL}" alt="ShrinkCord Logo" />
-          </div>
-          <span class="dshrink-badge">${badgeText}</span>
-          <h2 class="dshrink-title">Uh oh, this file exceeds the size limit.</h2>
-          <p class="dshrink-subtitle">${subtitleText}</p>
-        </div>
-
-        <div class="dshrink-file-card">
-          <div class="dshrink-thumb-box" id="dshrink-thumb-box">
-            <div class="dshrink-thumb-cover" id="dshrink-thumb-cover">
-              ${isAudio ? ICONS.audio : ICONS.video}
+        <div class="dshrink-body" id="dshrink-body">
+          <div class="dshrink-hero">
+            <div class="dshrink-hero-logo-box">
+              <img class="dshrink-hero-logo" src="${LOGO_URL}" alt="ShrinkCord Logo" />
             </div>
+            <span class="dshrink-badge">${badgeText}</span>
+            <h2 class="dshrink-title">Uh oh, this file exceeds the size limit.</h2>
+            <p class="dshrink-subtitle">${subtitleText}</p>
           </div>
-          <div class="dshrink-file-details">
-            <input type="text" class="dshrink-filename-input" id="dshrink-filename-input" value="${safeFileName}" placeholder="Filename" spellcheck="false" title="Click to rename" />
-            <div class="dshrink-file-meta">
-              <span class="dshrink-meta-item">
-                ${ICONS.clock}
-                <span id="dshrink-duration-val">--:--</span>
-              </span>
-              <span class="dshrink-meta-dot">&bull;</span>
-              <span class="dshrink-meta-item">
-                ${ICONS.file}
-                <strong class="dshrink-size-val">${Compressor.formatBytes(file.size)}</strong>
-              </span>
-              <span class="dshrink-meta-dot">&bull;</span>
-              <span class="dshrink-overlimit-tag">
-                ${ICONS.warn}
-                <span>Over 20MB</span>
-              </span>
-            </div>
-          </div>
-        </div>
 
-        <div class="dshrink-editor-card" id="dshrink-editor-card">
-          <div class="dshrink-player-wrap" id="dshrink-player-wrap">
-            ${isAudio ? `
-              <div class="dshrink-audio-screen" id="dshrink-media-screen" title="Click to play/pause audio">
-                <div class="dshrink-audio-waves" id="dshrink-audio-waves">
-                  <span class="dshrink-audio-bar" style="height: 14px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 24px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 18px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 32px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 20px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 16px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 28px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 22px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 30px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 14px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 26px;"></span>
-                  <span class="dshrink-audio-bar" style="height: 18px;"></span>
-                </div>
-                <div class="dshrink-player-overlay" id="dshrink-player-overlay">
-                  <div class="dshrink-play-bubble" id="dshrink-play-bubble">${ICONS.play}</div>
-                </div>
-                <div class="dshrink-player-hud">
-                  <span class="dshrink-hud-time" id="dshrink-hud-time">0:00 / 0:00</span>
-                  <button type="button" class="dshrink-hud-btn" id="dshrink-mute-btn" title="Toggle audio sound">${ICONS.volume}</button>
-                </div>
+          <div class="dshrink-file-card">
+            <div class="dshrink-thumb-box" id="dshrink-thumb-box">
+              <div class="dshrink-thumb-cover" id="dshrink-thumb-cover">
+                ${isAudio ? ICONS.audio : ICONS.video}
               </div>
-            ` : `
-              <div class="dshrink-video-screen" id="dshrink-media-screen" title="Click to play/pause video">
-                <div class="dshrink-player-overlay" id="dshrink-player-overlay">
-                  <div class="dshrink-play-bubble" id="dshrink-play-bubble">${ICONS.play}</div>
-                </div>
-                <div class="dshrink-player-hud">
-                  <span class="dshrink-hud-time" id="dshrink-hud-time">0:00 / 0:00</span>
-                  <button type="button" class="dshrink-hud-btn" id="dshrink-mute-btn" title="Toggle audio sound">${ICONS.mute}</button>
-                </div>
-              </div>
-            `}
-          </div>
-
-          <div class="dshrink-timeline-panel" id="dshrink-timeline-panel">
-            <div class="dshrink-timeline-header">
-              <span class="dshrink-timeline-title">
-                ${ICONS.scissors}
-                <span>Clip Trimmer</span>
-              </span>
-              <span class="dshrink-timeline-range-badge" id="dshrink-range-badge">0:00 - 0:00 (0s)</span>
             </div>
-
-            <div class="dshrink-timeline-track" id="dshrink-timeline-track" title="Click anywhere to jump playhead">
-              <div class="dshrink-timeline-ticks"></div>
-              <div class="dshrink-timeline-dim-left" id="dshrink-dim-left"></div>
-              <div class="dshrink-timeline-highlight" id="dshrink-highlight"></div>
-              <div class="dshrink-timeline-dim-right" id="dshrink-dim-right"></div>
-              <div class="dshrink-timeline-handle dshrink-timeline-handle-start" id="dshrink-handle-start" title="Drag to trim start"></div>
-              <div class="dshrink-timeline-handle dshrink-timeline-handle-end" id="dshrink-handle-end" title="Drag to trim end"></div>
-              <div class="dshrink-timeline-playhead" id="dshrink-playhead"></div>
-            </div>
-
-            <div class="dshrink-timeline-footer">
-              <div class="dshrink-time-chips">
-                <span class="dshrink-time-chip">Start: <strong id="dshrink-chip-start">0:00</strong></span>
-                <span class="dshrink-time-chip">End: <strong id="dshrink-chip-end">0:00</strong></span>
-                <span class="dshrink-time-chip">Length: <strong id="dshrink-chip-dur">0s</strong></span>
-              </div>
-              <div class="dshrink-segment-group dshrink-clip-preset-bar" id="dshrink-clip-segments">
-                ${renderSegments(PRESETS.CLIPS, "full")}
+            <div class="dshrink-file-details">
+              <input type="text" class="dshrink-filename-input" id="dshrink-filename-input" value="${safeFileName}" placeholder="Filename" spellcheck="false" title="Click to rename" />
+              <div class="dshrink-file-meta">
+                <span class="dshrink-meta-item">
+                  ${ICONS.clock}
+                  <span id="dshrink-duration-val">--:--</span>
+                </span>
+                <span class="dshrink-meta-dot">&bull;</span>
+                <span class="dshrink-meta-item">
+                  ${ICONS.file}
+                  <strong class="dshrink-size-val">${Compressor.formatBytes(file.size)}</strong>
+                </span>
+                <span class="dshrink-meta-dot">&bull;</span>
+                <span class="dshrink-overlimit-tag">
+                  ${ICONS.warn}
+                  <span>Over 20MB</span>
+                </span>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="dshrink-options-area" id="dshrink-options-area">
-          <div class="dshrink-group">
-            <label class="dshrink-label">Action Mode</label>
-            <div class="dshrink-segment-group" id="dshrink-mode-segments">
-              ${renderSegments(PRESETS.MODES, selectedMode)}
+          <div class="dshrink-editor-card" id="dshrink-editor-card">
+            <div class="dshrink-player-wrap" id="dshrink-player-wrap">
+              ${isAudio ? `
+                <div class="dshrink-audio-screen" id="dshrink-media-screen" title="Click to play/pause audio">
+                  <div class="dshrink-audio-waves" id="dshrink-audio-waves">
+                    <span class="dshrink-audio-bar" style="height: 14px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 24px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 18px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 32px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 20px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 16px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 28px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 22px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 30px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 14px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 26px;"></span>
+                    <span class="dshrink-audio-bar" style="height: 18px;"></span>
+                  </div>
+                  <div class="dshrink-player-overlay" id="dshrink-player-overlay">
+                    <div class="dshrink-play-bubble" id="dshrink-play-bubble">${ICONS.play}</div>
+                  </div>
+                  <div class="dshrink-player-hud">
+                    <span class="dshrink-hud-time" id="dshrink-hud-time">0:00 / 0:00</span>
+                    <button type="button" class="dshrink-hud-btn" id="dshrink-mute-btn" title="Toggle audio sound">${ICONS.volume}</button>
+                  </div>
+                </div>
+              ` : `
+                <div class="dshrink-video-screen" id="dshrink-media-screen" title="Click to play/pause video">
+                  <div class="dshrink-player-overlay" id="dshrink-player-overlay">
+                    <div class="dshrink-play-bubble" id="dshrink-play-bubble">${ICONS.play}</div>
+                  </div>
+                  <div class="dshrink-player-hud">
+                    <span class="dshrink-hud-time" id="dshrink-hud-time">0:00 / 0:00</span>
+                    <button type="button" class="dshrink-hud-btn" id="dshrink-mute-btn" title="Toggle audio sound">${ICONS.mute}</button>
+                  </div>
+                </div>
+              `}
             </div>
-            <div class="dshrink-split-info" id="dshrink-split-info">
-              <span class="dshrink-split-icon">✂️</span>
-              <span class="dshrink-split-text" id="dshrink-split-text"></span>
+
+            <div class="dshrink-timeline-panel" id="dshrink-timeline-panel">
+              <div class="dshrink-timeline-header">
+                <span class="dshrink-timeline-title">
+                  ${ICONS.scissors}
+                  <span>Clip Trimmer</span>
+                </span>
+                <span class="dshrink-timeline-range-badge" id="dshrink-range-badge">0:00 - 0:00 (0s)</span>
+              </div>
+
+              <div class="dshrink-timeline-track" id="dshrink-timeline-track" title="Click anywhere to jump playhead">
+                <div class="dshrink-timeline-ticks"></div>
+                <div class="dshrink-timeline-dim-left" id="dshrink-dim-left"></div>
+                <div class="dshrink-timeline-highlight" id="dshrink-highlight"></div>
+                <div class="dshrink-timeline-dim-right" id="dshrink-dim-right"></div>
+                <div class="dshrink-timeline-handle dshrink-timeline-handle-start" id="dshrink-handle-start" title="Drag to trim start"></div>
+                <div class="dshrink-timeline-handle dshrink-timeline-handle-end" id="dshrink-handle-end" title="Drag to trim end"></div>
+                <div class="dshrink-timeline-playhead" id="dshrink-playhead"></div>
+              </div>
+
+              <div class="dshrink-timeline-footer">
+                <div class="dshrink-time-chips">
+                  <span class="dshrink-time-chip" id="dshrink-chip-start">0:00</span>
+                  <span>&ndash;</span>
+                  <span class="dshrink-time-chip" id="dshrink-chip-end">0:00</span>
+                  <span class="dshrink-time-chip">(<strong id="dshrink-chip-dur">0s</strong>)</span>
+                </div>
+                <div class="dshrink-segment-group dshrink-clip-preset-bar" id="dshrink-clip-segments">
+                  ${renderSegments(PRESETS.CLIPS, "full")}
+                </div>
+              </div>
             </div>
           </div>
-          ${!isAudio ? `
+
+          <div class="dshrink-options-area" id="dshrink-options-area">
             <div class="dshrink-group">
-              <label class="dshrink-label">Output Format</label>
-              <div class="dshrink-segment-group" id="dshrink-format-segments">
-                ${renderSegments(PRESETS.FORMATS, selectedFormat)}
+              <label class="dshrink-label">Action Mode</label>
+              <div class="dshrink-segment-group" id="dshrink-mode-segments">
+                ${renderSegments(PRESETS.MODES, selectedMode)}
+              </div>
+              <div class="dshrink-split-info" id="dshrink-split-info">
+                <span class="dshrink-split-icon">✂️</span>
+                <span class="dshrink-split-text" id="dshrink-split-text"></span>
               </div>
             </div>
 
-            <div class="dshrink-group">
-              <label class="dshrink-label">Framerate</label>
-              <div class="dshrink-segment-group" id="dshrink-fps-segments">
-                ${renderSegments(PRESETS.FPS, selectedFps)}
-              </div>
-            </div>
-          ` : ""}
-
-          <div class="dshrink-group">
-            <label class="dshrink-label">Target File Size</label>
-            <div class="dshrink-segment-group" id="dshrink-size-segments">
-              ${renderSegments(PRESETS.SIZES, selectedSize)}
-            </div>
-          </div>
-
-          <div class="dshrink-group">
-            <label class="dshrink-label">${isAudio ? "Audio Quality" : "Video Quality"}</label>
-            <div class="dshrink-segment-group" id="dshrink-res-segments">
-              ${renderSegments(isAudio ? PRESETS.AUDIO_QUALITIES : PRESETS.VIDEO_QUALITIES, selectedRes)}
-            </div>
-          </div>
-
-          <div class="dshrink-toggles-row">
-            <label class="dshrink-check-item" title="Wrap media in Discord spoiler blur (SPOILER_)">
-              <input type="checkbox" id="dshrink-spoiler-check" class="dshrink-checkbox-hidden" />
-              <span class="dshrink-custom-check"></span>
-              <span>Mark as Spoiler</span>
-            </label>
             ${!isAudio ? `
-              <label class="dshrink-check-item" title="Strip audio completely for silent clips & crisper video quality">
-                <input type="checkbox" id="dshrink-mute-check" class="dshrink-checkbox-hidden" />
-                <span class="dshrink-custom-check"></span>
-                <span>Mute Audio (GIF)</span>
-              </label>
+              <div class="dshrink-grid-2">
+                <div class="dshrink-group">
+                  <label class="dshrink-label">Output Format</label>
+                  <div class="dshrink-segment-group" id="dshrink-format-segments">
+                    ${renderSegments(PRESETS.FORMATS, selectedFormat)}
+                  </div>
+                </div>
+
+                <div class="dshrink-group">
+                  <label class="dshrink-label">Framerate</label>
+                  <div class="dshrink-segment-group" id="dshrink-fps-segments">
+                    ${renderSegments(PRESETS.FPS, selectedFps)}
+                  </div>
+                </div>
+              </div>
             ` : ""}
-            <label class="dshrink-check-item" title="Boost quiet mic and game volume by 2x (+6dB)">
-              <input type="checkbox" id="dshrink-boost-check" class="dshrink-checkbox-hidden" />
-              <span class="dshrink-custom-check"></span>
-              <span>Boost Audio (2x)</span>
-            </label>
+
+            <div class="dshrink-grid-2">
+              <div class="dshrink-group">
+                <label class="dshrink-label">Target File Size</label>
+                <div class="dshrink-segment-group" id="dshrink-size-segments">
+                  ${renderSegments(PRESETS.SIZES, selectedSize)}
+                </div>
+              </div>
+
+              <div class="dshrink-group">
+                <label class="dshrink-label">${isAudio ? "Audio Quality" : "Video Quality"}</label>
+                <div class="dshrink-segment-group" id="dshrink-res-segments">
+                  ${renderSegments(isAudio ? PRESETS.AUDIO_QUALITIES : PRESETS.VIDEO_QUALITIES, selectedRes)}
+                </div>
+              </div>
+            </div>
+
+            <div class="dshrink-toggles-row">
+              <label class="dshrink-check-item" title="Wrap media in Discord spoiler blur (SPOILER_)">
+                <input type="checkbox" id="dshrink-spoiler-check" class="dshrink-checkbox-hidden" />
+                <span class="dshrink-custom-check"></span>
+                <span>Spoiler</span>
+              </label>
+              ${!isAudio ? `
+                <label class="dshrink-check-item" title="Strip audio completely for silent clips & crisper video quality">
+                  <input type="checkbox" id="dshrink-mute-check" class="dshrink-checkbox-hidden" />
+                  <span class="dshrink-custom-check"></span>
+                  <span>Mute (GIF)</span>
+                </label>
+              ` : ""}
+              <label class="dshrink-check-item" title="Boost quiet mic and game volume by 2x (+6dB)">
+                <input type="checkbox" id="dshrink-boost-check" class="dshrink-checkbox-hidden" />
+                <span class="dshrink-custom-check"></span>
+                <span>Boost Audio (2x)</span>
+              </label>
+            </div>
           </div>
-        </div>
-              <span>Boost Audio (2x)</span>
-            </label>
+
+          <div class="dshrink-progress-card" id="dshrink-progress-card">
+            <div class="dshrink-progress-header">
+              <span class="dshrink-progress-status" id="dshrink-status-text">Encoding media...</span>
+              <span class="dshrink-progress-pct" id="dshrink-percentage">0%</span>
+            </div>
+            <div class="dshrink-progress-track">
+              <div class="dshrink-progress-bar" id="dshrink-progress-bar"></div>
+            </div>
+            <span class="dshrink-progress-subtext" id="dshrink-progress-subtext">Optimizing media stream...</span>
           </div>
         </div>
 
-        <div class="dshrink-progress-card" id="dshrink-progress-card">
-          <div class="dshrink-progress-header">
-            <span class="dshrink-progress-status" id="dshrink-status-text">Encoding media...</span>
-            <span class="dshrink-progress-pct" id="dshrink-percentage">0%</span>
+        <div class="dshrink-footer-wrap">
+          <div class="dshrink-footer">
+            <button class="dshrink-btn-cancel" id="dshrink-cancel-btn">Cancel</button>
+            <button class="dshrink-btn-primary" id="dshrink-start-btn">
+              ${ICONS.zap}
+              <span>Compress</span>
+            </button>
           </div>
-          <div class="dshrink-progress-track">
-            <div class="dshrink-progress-bar" id="dshrink-progress-bar"></div>
+
+          <div class="dshrink-tip-row">
+            <a href="https://www.buymeacoffee.com/isaac4096" target="_blank" rel="noopener noreferrer" class="dshrink-tip-link">
+              ☕ Buy me a coffee
+            </a>
           </div>
-          <span class="dshrink-progress-subtext" id="dshrink-progress-subtext">Optimizing media stream...</span>
-        </div>
-
-        <div class="dshrink-footer">
-          <button class="dshrink-btn-cancel" id="dshrink-cancel-btn">Cancel</button>
-          <button class="dshrink-btn-primary" id="dshrink-start-btn">
-            ${ICONS.zap}
-            <span>Compress</span>
-          </button>
-        </div>
-
-        <div class="dshrink-tip-row">
-          <a href="https://www.buymeacoffee.com/isaac4096" target="_blank" rel="noopener noreferrer" class="dshrink-tip-link">
-            ☕ Buy me a coffee
-          </a>
         </div>
       </div>
     `;
@@ -1297,7 +1342,7 @@
       const dur = Math.max(0.25, trimEnd - trimStart);
 
       if (handleStart) handleStart.style.left = `${startPct}%`;
-      if (handleEnd) handleEnd.style.left = `calc(${endPct}% - 14px)`;
+      if (handleEnd) handleEnd.style.left = `calc(${endPct}% - 12px)`;
       if (highlight) {
         highlight.style.left = `${startPct}%`;
         highlight.style.width = `${Math.max(0, endPct - startPct)}%`;
