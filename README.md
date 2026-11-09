@@ -14,12 +14,12 @@
 <br/>
 
 <p align="center">
-  <img src="assets/preview.png" alt="ShrinkCord Setup Modal" width="48%" />
+  <img src="assets/preview.png" alt="ShrinkCord Video Editor & Setup Modal" width="48%" />
   &nbsp;&nbsp;
   <img src="assets/progress.png" alt="ShrinkCord Live Transcoding" width="48%" />
 </p>
 <p align="center">
-  <em>Left: Auto-detection with size, format &amp; resolution presets • Right: Live client-side transcoding with synchronized AV</em>
+  <em>Left: Embedded 16:9 preview player with dual-handle timeline scrubber &amp; 2-column options • Right: Real-time client-side transcoding with progress bar and ETA</em>
 </p>
 
 ---
@@ -38,17 +38,22 @@ You record a gaming clip or audio track on your computer. You drag it into Disco
 ---
 
 ## ✨ Features (100% Free & Open Source)
+- **Embedded 16:9 Video Preview Player:** In-modal frame preview with play/pause HUD, audio mute toggle, and real-time frame seeking.
+- **Dual-Handle Timeline Scrubber:** Draggable start and end trimming handles with live timestamp readouts and clamped glow needle.
+- **Dynamic Quick Clip Presets:** Instant trimming presets (`Full Video`, `Custom Trim`, `30s Clip`, `60s Clip`) adaptively filtered based on media duration.
+- **Audio Waveform Preview & Trimming:** Animated multi-bar waveform visualizer and timestamp trimming for oversized audio tracks.
+- **Auto-Split into Parts (100% Full Quality):** Option to slice oversized media into numbered parts under 19MB each preserving 100% original resolution and audio fidelity.
 - **Universal MP4 Export:** Native H.264 MP4 export for seamless inline playback across iPhone/iOS, Android, Mac, and Windows.
-- **Auto-Split into Parts (100% Full Quality):** Option to slice oversized media into numbered parts under 19MB each without any quality reduction.
-- **Interactive Visual Trimming:** Scrub and select custom Start and End clip timestamps with live visual frame scrubbing.
 - **60 FPS Smooth Mode:** Export high-framerate 60 FPS gaming clips or efficient 30 FPS clips under the 19MB limit.
 - **Background Tab Anti-Freezing:** Dedicated Web Worker heartbeat prevents browser background tab throttling from pausing your encoding.
+- **Compact 2-Column Responsive Layout:** Streamlined options grid with pinned action buttons so controls are never cut off.
 - **Native Spoiler Tagging:** One-click "Mark as Spoiler" toggle automatically instructs Discord to wrap the clip in a spoiler blur layer (`SPOILER_` prefix).
 - **Inline Clip Renaming:** Easily edit and rename your file right in the compression dialog before it gets attached.
 - **Massive File Support:** Effortlessly handles 50MB to 500MB+ videos with adaptive bitrate scaling.
 - **Batch / Queue Processing:** Drop multiple files at once — ShrinkCord queues and compresses them sequentially into your draft.
 - **Target Size Presets:** Instant presets for 19 MB (Discord Free safe limit), 48 MB (Nitro Basic), or 8 MB (Compact).
 - **Audio Transcoding:** Downsamples voice and studio tracks to fit under Discord limits with clean 32kHz/22kHz WAV.
+- **Vencord Desktop Client Plugin:** Full native Discord desktop client support via the included Vencord userplugin.
 
 ---
 
